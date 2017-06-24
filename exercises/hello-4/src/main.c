@@ -263,7 +263,7 @@ int main(void) {
 
     /* get the message stored in the first message register */
     msg = seL4_GetMR(0);
-    printf("main: got a message %#x from %#x\n", msg, sender_badge);
+    printf("main: got a message %#lx from %#lx\n", msg, sender_badge);
 
     /* modify the message */
     seL4_SetMR(0, ~msg);

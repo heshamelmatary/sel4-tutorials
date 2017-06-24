@@ -134,7 +134,7 @@ int main(void) {
                                 seL4_TCBBits /* size */,
                                 cspace_cap /* root cnode cap */,
                                 cspace_cap /* destination cspace */,
-                                32 /* depth */,
+                                0 /* depth */,
                                 tcb_cap /* offset */,
                                 1 /* num objects */);
 
@@ -152,7 +152,7 @@ int main(void) {
     /* give the new thread a name */
     name_thread(tcb_cap, "hello-2: thread_2");
 
-    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    const int stack_alignment_requirement = 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
                "Stack top isn't aligned correctly to a %dB boundary.\n"
@@ -170,10 +170,12 @@ int main(void) {
      */
 
 
+    extern char __global_pointer$[];
     /* set start up registers for the new thread: */
     seL4_UserContext regs = {
-        .eip = (seL4_Word)thread_2,
-        .esp = (seL4_Word)thread_2_stack_top
+        .sepc = (seL4_Word)thread_2,
+        .sp = (seL4_Word)thread_2_stack_top,
+        .x3 = (seL4_Word)__global_pointer$
     };
 
 
@@ -186,7 +188,7 @@ int main(void) {
 
     /* actually write the TCB registers.  we write 2 registers:
      * instruction pointer is first, stack pointer is second. */
-    error = seL4_TCB_WriteRegisters(tcb_cap, 0, 0, 2, &regs);
+    error = seL4_TCB_WriteRegisters(tcb_cap, 0, 0, sizeof(seL4_UserContext) / sizeof(seL4_Word), &regs);
 
     ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
                   "\tDid you write the correct number of registers? See arg4.\n");

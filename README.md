@@ -18,15 +18,10 @@ To get a copy of the seL4 API and library exercise code and all libraries and to
 
         mkdir sel4-tutorials
         cd sel4-tutorials
-        repo init -u http://github.com/sel4-projects/sel4-tutorials-manifest -m sel4-tutorials.xml
+        repo init -u https://github.com/heshamelmatary/sel4-tutorials-manifest.git -m sel4-tutorials.xml
         repo sync 
 
-To get a copy of the CAmkES exercise code and all libraries and tools needed to build and run it do the following:
-
-        mkdir camkes-tutorials
-        cd camkes-tutorials
-        repo init -u http://github.com/sel4-projects/sel4-tutorials-manifest -m camkes-tutorials.xml
-        repo sync 
+Note: All seL4 hello apps except hello-timer are ported to RISC-V.
 
 ### Reporting issues or bugs in the tutorials:
 Please report any issues you find in the tutorials (bugs, outdated API calls, etc) by filing an issue on the public github repository:
@@ -44,5 +39,3 @@ You will need to have LaTeX installed to build it.
 
 We've also included a pre-generated PDF version in [`docs/manual.pdf'](docs/manual.pdf)
 
-## CAmkES Documentation
-CAmkES documentation lives in the camkes-tool repository in [docs/index.md](https://github.com/seL4/camkes-tool/blob/master/docs/index.md).

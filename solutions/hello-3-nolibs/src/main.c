@@ -30,6 +30,8 @@
 #include <utils/zf_log.h>
 #include <sel4utils/sel4_zf_logif.h>
 
+#include <vspace/page.h>
+
 /* constants */
 #define IPCBUF_FRAME_SIZE_BITS 12 // use a 4K frame for the IPC buffer
 #define IPCBUF_VADDR 0x7000000 // arbitrary (but free) address for IPC buffer
@@ -103,7 +105,7 @@ int untyped_retype_root(seL4_CPtr untyped, seL4_ObjectType type, int size_bits, 
                                size_bits /* size */,
                                root_cnode /* root cnode cap */,
                                root_cnode /* destination cspace */,
-                               32 /* depth */,
+                               0 /* depth */,
                                slot /* offset */,
                                1 /* num objects */);
 }
@@ -202,7 +204,7 @@ int main(void) {
 
     ZF_LOGF_IFERR(error, "Failed to retype our chosen untyped into a TCB child object.\n");
 
-    error = untyped_retype_root(untyped, seL4_X86_4K, seL4_PageBits, cspace_cap, ipc_frame_cap);
+    error = untyped_retype_root(untyped, seL4_ARCH_4KPage, seL4_PageBits, cspace_cap, ipc_frame_cap);
 
     ZF_LOGF_IFERR(error, "Failed to retype our chosen untyped into a page object.\n");
 
@@ -223,28 +225,28 @@ int main(void) {
      */
     seL4_Word ipc_buffer_vaddr;
     ipc_buffer_vaddr = IPCBUF_VADDR;
-    error = seL4_X86_Page_Map(ipc_frame_cap, pd_cap, ipc_buffer_vaddr,
-                              seL4_AllRights, seL4_X86_Default_VMAttributes);
+    error = seL4_RISCV_Page_Map(ipc_frame_cap, pd_cap, ipc_buffer_vaddr,
+                              seL4_AllRights, seL4_RISCV_Default_VMAttributes);
     if (error != 0) {
 
         /* TASK 4: Retype the untyped into page table (if this was done in TASK 3, ignore this). */
 
 
         /* create and map a page table */
-        error = untyped_retype_root(untyped, seL4_X86_PageTableObject, seL4_PageTableBits, cspace_cap, page_table_cap);
+        error = untyped_retype_root(untyped, seL4_RISCV_PageTableObject, seL4_PageTableBits, cspace_cap, page_table_cap);
 
         ZF_LOGF_IFERR(error, "Failed to retype an object into a page table.\n"
                       "Re-examine your arguments -- check the solution files if you're unable to get it.\n");
 
-        error = seL4_X86_PageTable_Map(page_table_cap, pd_cap,
-                                       ipc_buffer_vaddr, seL4_X86_Default_VMAttributes);
+        error = seL4_RISCV_PageTable_Map(page_table_cap, pd_cap,
+                                       ipc_buffer_vaddr, seL4_RISCV_Default_VMAttributes);
         ZF_LOGF_IFERR(error, "Failed to map page table into VSpace.\n"
                       "\tWe are inserting a new page table into the top-level table.\n"
                       "\tPass a capability to the new page table, and not for example, the IPC buffer frame vaddr.\n");
 
         /* then map the frame in */
-        error = seL4_X86_Page_Map(ipc_frame_cap, pd_cap,
-                                  ipc_buffer_vaddr, seL4_AllRights, seL4_X86_Default_VMAttributes);
+        error = seL4_RISCV_Page_Map(ipc_frame_cap, pd_cap,
+                                  ipc_buffer_vaddr, seL4_AllRights, seL4_RISCV_Default_VMAttributes);
         ZF_LOGF_IFERR(error, "Failed again to map the IPC buffer frame into the VSpace.\n"
                       "\tPass a capability to the IPC buffer's physical frame.\n"
                       "\tRevisit the first seL4_ARCH_Page_Map call above and double-check your arguments.\n");
@@ -260,7 +262,7 @@ int main(void) {
 
 
     /* create a copy of the endpoint cap with a badge (to use for sending) */
-    seL4_CNode_Mint(cspace_cap, badged_ep_cap, 32, cspace_cap, ep_cap, 32,
+    seL4_CNode_Mint(cspace_cap, badged_ep_cap, 0, cspace_cap, ep_cap, 0,
                     seL4_AllRights, seL4_CapData_Badge_new(EP_BADGE));
 
 
@@ -280,18 +282,19 @@ int main(void) {
     size_t regs_size = sizeof(seL4_UserContext) / sizeof(seL4_Word);
 
     /* check that stack is aligned correctly */
-    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    const int stack_alignment_requirement = 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
                "Stack top isn't aligned correctly to a %dB boundary.\n"
                "\tDouble check to ensure you're not trampling.",
                stack_alignment_requirement);
 
+    extern char __global_pointer$[];
     /* set instruction pointer, stack pointer and fs register (used for IPC buffer) */
     seL4_UserContext regs = {
-        .eip = (seL4_Word)thread_2,
-        .esp = (seL4_Word)thread_2_stack_top,
-        .fs = IPCBUF_GDT_SELECTOR
+        .sepc = (seL4_Word)thread_2,
+        .sp = (seL4_Word)thread_2_stack_top,
+        .x3 = (seL4_Word)__global_pointer$
     };
 
     /* actually write the TCB registers. */

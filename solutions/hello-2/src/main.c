@@ -243,7 +243,7 @@ int main(void) {
 
 
     /* check that stack is aligned correctly */
-    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    const int stack_alignment_requirement = 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
                "Stack top isn't aligned correctly to a %dB boundary.\n"
@@ -262,6 +262,10 @@ int main(void) {
 
     sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
 
+    extern char __global_pointer$[];
+
+    regs.x3 =  (seL4_Word) __global_pointer$;
+
 
     /* TASK 13: actually write the TCB registers.  We write 2 registers:
      * instruction pointer is first, stack pointer is second. */
@@ -279,7 +283,7 @@ int main(void) {
      * You can find out more about it in the API manual: http://sel4.systems/Info/Docs/seL4-manual-3.0.0.pdf
      */
 
-    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, 2, &regs);
+    error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, sizeof(seL4_UserContext) / sizeof(seL4_Word), &regs);
 
     ZF_LOGF_IFERR(error, "Failed to write the new thread's register set.\n"
                   "\tDid you write the correct number of registers? See arg4.\n");
@@ -302,5 +306,6 @@ int main(void) {
     /* we are done, say hello */
     printf("main: hello world\n");
 
+    while(1);
     return 0;
 }

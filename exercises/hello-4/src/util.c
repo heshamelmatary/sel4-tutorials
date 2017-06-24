@@ -26,7 +26,7 @@ void abort(void) {
 
 /* allow printf to use kernel debug printing */
 void __arch_putchar(int c) {
-#ifdef CONFIG_DEBUG_BUILD
+#ifdef CONFIG_PRINTING
     seL4_DebugPutChar(c);
 #endif
 }

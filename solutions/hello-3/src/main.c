@@ -133,7 +133,7 @@ void thread_2(void) {
     msg = seL4_GetMR(0);
 
 
-    printf("thread_2: got a message %#x from %#x\n", msg, sender_badge);
+    printf("thread_2: got a message %#lx from %#lx\n", msg, sender_badge);
 
     /* modify the message */
     msg = ~msg;
@@ -406,7 +406,7 @@ int main(void) {
     sel4utils_set_instruction_pointer(&regs, (seL4_Word)thread_2);
 
     /* check that stack is aligned correctly */
-    const int stack_alignment_requirement = sizeof(seL4_Word) * 2;
+    const int stack_alignment_requirement = 2;
     uintptr_t thread_2_stack_top = (uintptr_t)thread_2_stack + sizeof(thread_2_stack);
 
     ZF_LOGF_IF(thread_2_stack_top % (stack_alignment_requirement) != 0,
@@ -418,7 +418,10 @@ int main(void) {
     sel4utils_set_stack_pointer(&regs, thread_2_stack_top);
 
     /* set the fs register for IPC buffer */
-    regs.fs = IPCBUF_GDT_SELECTOR;
+    //regs.tp = IPCBUF_GDT_SELECTOR;
+    extern char __global_pointer$[];
+
+    regs.x3 =  (seL4_Word) __global_pointer$;
 
     /* actually write the TCB registers. */
     error = seL4_TCB_WriteRegisters(tcb_object.cptr, 0, 0, regs_size, &regs);
@@ -510,7 +513,7 @@ int main(void) {
     ZF_LOGF_IF(msg != ~MSG_DATA,
                "Response data from thread_2's content was not what was expected.\n");
 
-    printf("main: got a reply: %#x\n", msg);
+    printf("main: got a reply: %#lx\n", msg);
 
     return 0;
 }

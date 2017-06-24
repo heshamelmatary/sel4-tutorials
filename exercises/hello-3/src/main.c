@@ -363,6 +363,9 @@ int main(void) {
 
     /* set start up registers for the new thread */
     seL4_UserContext regs = {0};
+    extern char __global_pointer$[];
+    regs.x3 =  (seL4_Word) __global_pointer$;
+
     size_t regs_size = sizeof(seL4_UserContext) / sizeof(seL4_Word);
 
     /* set instruction pointer where the thread shoud start running */

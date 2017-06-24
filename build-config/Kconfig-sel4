@@ -28,8 +28,6 @@ menu "seL4 Applications"
     source "apps/hello-3/Kconfig"
     source "apps/hello-4/Kconfig"
     source "apps/hello-4-app/Kconfig"
-    source "apps/hello-timer/Kconfig"
-    source "apps/hello-timer-client/Kconfig"
     source "apps/hello-2-nolibs/Kconfig"
     source "apps/hello-3-nolibs/Kconfig"
 endmenu

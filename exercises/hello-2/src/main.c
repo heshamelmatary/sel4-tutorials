@@ -202,6 +202,9 @@ int main(void) {
      */
 
     seL4_UserContext regs = {0};
+    extern char __global_pointer$[];
+    regs.x3 =  (seL4_Word) __global_pointer$;
+
 
     /* TASK 11: set instruction pointer where the thread shoud start running */
     /* hint 1: sel4utils_set_instruction_pointer()
